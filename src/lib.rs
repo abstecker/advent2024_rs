@@ -10,51 +10,47 @@ pub struct Advent {
 
 impl Advent {
 
-    fn diff(u1: isize, u2: isize) -> isize {
-        (u1 - u2).abs()
-    }
+    pub fn get_distance(&self) -> isize {
+        let mut distance: isize = 0;
 
-    pub fn get_vecs() -> (Vec<isize>, Vec<isize>) {
-        let filename = "data/day01.txt";
+        for i in 0..self.v1.len() {
+            let u1 = self.v1[i];
+            let u2 = self.v2[i];
 
-        let mut v1: Vec<isize> = Vec::new();
-        let mut v2: Vec<isize> = Vec::new();
+            let diff: isize = (u1 - u2).abs();
+            println!("{u1} - {u2} = {diff}");
 
-        for line in read_to_string(filename).unwrap().lines() {
-
-            let v = line.split_whitespace().collect::<Vec<&str>>();
-
-            let u1 = v[0].parse::<isize>().unwrap();
-            v1.push(u1);
-
-            let u2 = v[1].parse::<isize>().unwrap();
-            v2.push(u2);
+            distance = distance + diff
         }
-
-        v1.sort();
-        v2.sort();
-
-        (v1, v2)
+        distance
     }
 
-    pub fn simularity_map(v1: Vec<isize>, v2: Vec<isize>) -> HashMap<isize, usize> {
+    pub fn frequency(u1: isize) -> usize {
+        let count: usize = 0;
+
+        // for
+
+        count
+    }
+
+    pub fn simularity_map(&self) -> HashMap<isize, usize> {
         let mut mappie: HashMap<isize, usize> = HashMap::new();
 
-        for i in v1 {
-            mappie.insert(i, 0);
+        for i in &self.v2 {
+            mappie.insert(*i, 0);
         }
 
-        for j in v2 {
+        for j in &self.v1 {
             let old_count_option = mappie.get(&j);
             match old_count_option {
                 None => {
-                    println!("NOPE");
-                    exit(1);
+                    println!("NOPE: {j}");
+                    // exit(1);
                 }
                 Some(o) => {
                     let new_count = 0 + 1;
-                    mappie.insert(j, new_count);
-                },
+                    mappie.insert(*j, new_count);
+                }
             };
         }
 
@@ -88,5 +84,15 @@ impl Default for Advent {
             v1,
             v2,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn get_distance() {
+        assert_eq!(3246517, Advent::default().get_distance());
     }
 }
