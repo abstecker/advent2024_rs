@@ -1,7 +1,8 @@
 pub mod freq;
+mod nuclear;
 
-use std::fs::read_to_string;
 use crate::freq::{FrequencyMap, XIncrement};
+use std::fs::read_to_string;
 
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct Advent {
@@ -81,8 +82,8 @@ impl Default for Advent {
 #[cfg(test)]
 #[allow(non_snake_case)]
 mod test {
-    use crate::freq::{FrequencyMap, XIncrement};
     use super::*;
+    use crate::freq::{FrequencyMap, XIncrement};
 
     #[test]
     fn get_distance() {
