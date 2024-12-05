@@ -85,6 +85,24 @@ mod nuclear__test {
 
     #[rstest]
     #[case("7 6 4 2 1")]
+    #[case("1 2 3 4 5")]
+    fn is_safe(#[case] input: &str) {
+        let lr = LevelReport::from_str(input).unwrap();
+        assert!(lr.is_safe())
+    }
+
+    #[rstest]
+    #[case("8 7 3 2 1")]
+    #[case("1 3 2 4 9")]
+    #[case("7 4 8 2 1")]
+    #[case("1 2 3 8 3")]
+    fn is_safe__false(#[case] input: &str) {
+        let lr = LevelReport::from_str(input).unwrap();
+        assert!(!lr.is_safe())
+    }
+
+    #[rstest]
+    #[case("7 6 4 2 1")]
     #[case("1 3 2 4 5")]
     fn is_gradual(#[case] input: &str) {
         let lr = LevelReport::from_str(input).unwrap();
