@@ -1,5 +1,5 @@
 pub mod freq;
-mod nuclear;
+pub mod nuclear;
 
 use crate::freq::{FrequencyMap, XIncrement};
 use std::fs::read_to_string;

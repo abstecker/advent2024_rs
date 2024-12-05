@@ -16,7 +16,10 @@ impl LevelReport {
     }
 
     fn is_gradual(&self) -> bool {
-        todo!()
+        LevelReport::is_within_3(self.0[0], self.0[1]) &&
+            LevelReport::is_within_3(self.0[1], self.0[2]) &&
+            LevelReport::is_within_3(self.0[2], self.0[3]) &&
+            LevelReport::is_within_3(self.0[3], self.0[4])
     }
 
     fn is_within_3(x: usize, y: usize) -> bool {
@@ -81,8 +84,20 @@ mod nuclear__test {
     use rstest::rstest;
 
     #[rstest]
-    #[case("")]
-    fn is_gradual(#[case] input: &str) {}
+    #[case("7 6 4 2 1")]
+    #[case("1 3 2 4 5")]
+    fn is_gradual(#[case] input: &str) {
+        let lr = LevelReport::from_str(input).unwrap();
+        assert!(lr.is_gradual())
+    }
+
+    #[rstest]
+    #[case("8 7 3 2 1")]
+    #[case("1 3 2 4 9")]
+    fn is_gradual__false(#[case] input: &str) {
+        let lr = LevelReport::from_str(input).unwrap();
+        assert!(!lr.is_gradual())
+    }
 
     #[rstest]
     #[case("7 6 4 2 1")]
