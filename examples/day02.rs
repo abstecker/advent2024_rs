@@ -1,3 +1,5 @@
+use advent2024_rs::nuclear::LevelReports;
+
 /// # [Day 2: Red-Nosed Reports](https://adventofcode.com/2024/day/2)
 ///
 /// Fortunately, the first location The Historians want to search isn't a long walk from the Chief Historian's office.
@@ -35,4 +37,12 @@
 /// So, in this example, 2 reports are safe.
 ///
 /// Analyze the unusual data from the engineers. How many reports are safe?
-fn main() {}
+fn main() {
+    let reports = LevelReports::default();
+
+    let safe = reports.get_safe();
+    let notsafe = reports.get_unsafe();
+
+    println!("UNSAFE: {}", notsafe.len());
+    println!("safe: {}", safe.len());
+}

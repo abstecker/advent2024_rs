@@ -1,13 +1,77 @@
 use std::fmt::Error;
+use std::fs::read_to_string;
 use std::str::FromStr;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
+pub struct LevelReports(Vec<LevelReport>);
+
+impl LevelReports {
+    pub fn new() -> Self {
+        LevelReports(Vec::new())
+    }
+
+    pub fn push(&mut self, lr: &LevelReport) {
+        self.0.push(lr.clone());
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn vec(&self) -> &Vec<LevelReport> {
+        &self.0
+    }
+
+    pub fn get_safe(&self) -> LevelReports {
+        let mut safe = LevelReports::new();
+
+        for lr in &self.0 {
+            if lr.is_safe() {
+                safe.push(&lr);
+            }
+        }
+
+        safe
+    }
+
+    pub fn get_unsafe(&self) -> LevelReports {
+        let mut not_safe = LevelReports::new();
+
+        for lr in &self.0 {
+            if !lr.is_safe() {
+                not_safe.push(&lr);
+            }
+        }
+
+        not_safe
+    }
+}
+
+impl Default for LevelReports {
+    fn default() -> Self {
+        let filename = "data/day02.txt";
+        let mut lr = LevelReports::new();
+        for line in read_to_string(filename).unwrap().lines() {
+            match LevelReport::from_str(line) {
+                Ok(report) => {
+                    lr.push(&report);
+                }
+                Err(report) => {
+                    println!("Unable to read in {report}");
+                }
+            }
+        }
+
+        lr
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 // pub struct Deck([Card; 52]);
-pub struct LevelReport([usize; 5]);
+pub struct LevelReport(Vec<usize>);
 
 impl LevelReport {
-
-    pub fn array(&self) -> &[usize; 5] {
+    pub fn vec(&self) -> &Vec<usize> {
         &self.0
     }
 
@@ -15,14 +79,20 @@ impl LevelReport {
         self.is_gradual() && self.is_unidirectional()
     }
 
-    fn is_gradual(&self) -> bool {
-        LevelReport::is_within_3(self.0[0], self.0[1]) &&
-            LevelReport::is_within_3(self.0[1], self.0[2]) &&
-            LevelReport::is_within_3(self.0[2], self.0[3]) &&
-            LevelReport::is_within_3(self.0[3], self.0[4])
+    pub fn is_gradual(&self) -> bool {
+        for i in 0..self.vec().len() {
+            let boundary = self.vec().len() - 1;
+            if i < boundary {
+                if !LevelReport::is_within_3(self.0[i], self.0[i + 1]) {
+                    return false;
+                }
+            }
+        }
+
+        true
     }
 
-    fn is_within_3(x: usize, y: usize) -> bool {
+    pub fn is_within_3(x: usize, y: usize) -> bool {
         let mut higher = x;
         let mut lower = y;
 
@@ -34,26 +104,34 @@ impl LevelReport {
         (higher - lower) < 4
     }
 
-    fn is_lowering(&self) -> bool {
-        (self.0[0] < self.0[1]) &&
-            (self.0[1] < self.0[2]) &&
-            (self.0[2] < self.0[3]) &&
-            (self.0[3] < self.0[4])
+    pub fn is_lowering(&self) -> bool {
+        for i in 0..self.vec().len() {
+            let boundary = self.vec().len() - 1;
+            if i < boundary {
+                if self.0[i] <= self.0[i + 1] {
+                    return false;
+                }
+            }
+        }
+
+        true
     }
 
-    fn is_rising(&self) -> bool {
-        (self.0[0] > self.0[1]) &&
-        (self.0[1] > self.0[2]) &&
-        (self.0[2] > self.0[3]) &&
-        (self.0[3] > self.0[4])
+    pub fn is_rising(&self) -> bool {
+        for i in 0..self.vec().len() {
+            let boundary = self.vec().len() - 1;
+            if i < boundary {
+                if self.0[i] >= self.0[i + 1] {
+                    return false;
+                }
+            }
+        }
+
+        true
     }
 
-    fn is_unidirectional(&self) -> bool {
+    pub fn is_unidirectional(&self) -> bool {
         self.is_rising() || self.is_lowering()
-    }
-
-    pub fn as_vec(&self) -> Vec<usize> {
-        self.0.to_vec()
     }
 }
 
@@ -63,16 +141,16 @@ impl FromStr for LevelReport {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let v = s.split_whitespace().collect::<Vec<&str>>();
 
-        if v.len() != 5 {
-            Err(Error)
-        } else {
-            let level1 = v[0].parse::<usize>().unwrap();
-            let level2 = v[1].parse::<usize>().unwrap();
-            let level3 = v[2].parse::<usize>().unwrap();
-            let level4 = v[3].parse::<usize>().unwrap();
-            let level5 = v[4].parse::<usize>().unwrap();
+        match v.len() {
+            _ => {
+                let mut ints: Vec<usize> = Vec::new();
 
-            Ok(LevelReport([level1, level2, level3, level4, level5]))
+                for i in v {
+                    ints.push(i.parse::<usize>().unwrap());
+                }
+
+                Ok(LevelReport(ints))
+            }
         }
     }
 }
@@ -96,6 +174,7 @@ mod nuclear__test {
     #[case("1 3 2 4 9")]
     #[case("7 4 8 2 1")]
     #[case("1 2 3 8 3")]
+    #[case("43 44 47 49 49")]
     fn is_safe__false(#[case] input: &str) {
         let lr = LevelReport::from_str(input).unwrap();
         assert!(!lr.is_safe())
@@ -104,6 +183,7 @@ mod nuclear__test {
     #[rstest]
     #[case("7 6 4 2 1")]
     #[case("1 3 2 4 5")]
+    #[case("43 44 47 49 49")]
     fn is_gradual(#[case] input: &str) {
         let lr = LevelReport::from_str(input).unwrap();
         assert!(lr.is_gradual())
@@ -128,30 +208,39 @@ mod nuclear__test {
     #[rstest]
     #[case("7 4 8 2 1")]
     #[case("1 2 3 8 3")]
+    #[case("43 44 47 49 49")]
     fn is_unidirectional__false(#[case] input: &str) {
         let lr = LevelReport::from_str(input).unwrap();
         assert!(!lr.is_unidirectional())
     }
 
     #[test]
+    fn isolate() {
+        let lr = LevelReport::from_str("95 93 91 90 90").unwrap();
+        assert!(!lr.is_rising());
+        assert!(!lr.is_lowering());
+    }
+
+    #[test]
     fn is_within_3() {
-        assert!(LevelReport::is_within_3(1,2));
-        assert!(LevelReport::is_within_3(1,1));
-        assert!(LevelReport::is_within_3(2,1));
-        assert!(LevelReport::is_within_3(4,6));
-        assert!(LevelReport::is_within_3(4,7));
+        assert!(LevelReport::is_within_3(1, 2));
+        assert!(LevelReport::is_within_3(1, 1));
+        assert!(LevelReport::is_within_3(2, 1));
+        assert!(LevelReport::is_within_3(4, 6));
+        assert!(LevelReport::is_within_3(4, 7));
     }
 
     #[test]
     fn from_str() {
         let input = "7 6 4 2 1";
 
-        let expected = LevelReport([7, 6, 4, 2, 1]);
+        let expected = LevelReport(vec![7, 6, 4, 2, 1]);
 
         assert_eq!(expected, LevelReport::from_str(input).unwrap());
     }
 
     #[test]
+    #[ignore]
     fn from_str__invalid() {
         assert!(LevelReport::from_str("7 6 4 2").is_err());
         assert!(LevelReport::from_str("7 6 4 2 1 3").is_err());
