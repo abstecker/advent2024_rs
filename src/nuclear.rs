@@ -71,25 +71,28 @@ impl Default for LevelReports {
 pub struct LevelReport(Vec<usize>);
 
 impl LevelReport {
+    pub const THRESHOLD: usize = 1;
     pub fn vec(&self) -> &Vec<usize> {
         &self.0
     }
 
     pub fn is_safe(&self) -> bool {
-        self.is_gradual() && self.is_unidirectional()
+        (self.is_gradual() +
+            self.is_unidirectional()) <= LevelReport::THRESHOLD
     }
 
-    pub fn is_gradual(&self) -> bool {
+    pub fn is_gradual(&self) -> usize {
+        let mut fails: usize = 0;
         for i in 0..self.vec().len() {
             let boundary = self.vec().len() - 1;
             if i < boundary {
                 if !LevelReport::is_within_3(self.0[i], self.0[i + 1]) {
-                    return false;
+                    fails = fails + 1;
                 }
             }
         }
 
-        true
+        fails
     }
 
     pub fn is_within_3(x: usize, y: usize) -> bool {
@@ -104,34 +107,44 @@ impl LevelReport {
         (higher - lower) < 4
     }
 
-    pub fn is_lowering(&self) -> bool {
+    pub fn is_lowering(&self) -> usize {
+        let mut fails: usize = 0;
+
         for i in 0..self.vec().len() {
             let boundary = self.vec().len() - 1;
             if i < boundary {
                 if self.0[i] <= self.0[i + 1] {
-                    return false;
+                    fails = fails + 1;
                 }
             }
         }
 
-        true
+        fails
     }
 
-    pub fn is_rising(&self) -> bool {
+    pub fn is_rising(&self) -> usize {
+        let mut fails: usize = 0;
         for i in 0..self.vec().len() {
             let boundary = self.vec().len() - 1;
             if i < boundary {
                 if self.0[i] >= self.0[i + 1] {
-                    return false;
+                    fails = fails + 1;
                 }
             }
         }
 
-        true
+        fails
     }
 
-    pub fn is_unidirectional(&self) -> bool {
-        self.is_rising() || self.is_lowering()
+    pub fn is_unidirectional(&self) -> usize {
+        let rising = self.is_rising();
+        let lowering = self.is_lowering();
+
+        if rising < lowering {
+            rising
+        } else {
+            lowering
+        }
     }
 }
 
@@ -170,31 +183,33 @@ mod nuclear__test {
     }
 
     #[rstest]
-    #[case("8 7 3 2 1")]
-    #[case("1 3 2 4 9")]
+    #[case("9 5 1")]
+    #[case("1 3 2 4 3")]
     #[case("7 4 8 2 1")]
     #[case("1 2 3 8 3")]
-    #[case("43 44 47 49 49")]
+    #[case("43 44 47 49 49 49")]
+    #[case("43 44 47 49 49 48")]
     fn is_safe__false(#[case] input: &str) {
         let lr = LevelReport::from_str(input).unwrap();
         assert!(!lr.is_safe())
     }
 
     #[rstest]
+    #[case("8 7 3 2 1")]
     #[case("7 6 4 2 1")]
     #[case("1 3 2 4 5")]
     #[case("43 44 47 49 49")]
     fn is_gradual(#[case] input: &str) {
         let lr = LevelReport::from_str(input).unwrap();
-        assert!(lr.is_gradual())
+        assert!(lr.is_gradual() <= LevelReport::THRESHOLD);
     }
 
     #[rstest]
-    #[case("8 7 3 2 1")]
-    #[case("1 3 2 4 9")]
+    #[case("9 5 1")]
+    #[case("1 4 5 7 9 15 19")]
     fn is_gradual__false(#[case] input: &str) {
         let lr = LevelReport::from_str(input).unwrap();
-        assert!(!lr.is_gradual())
+        assert!(!(lr.is_gradual()<= LevelReport::THRESHOLD))
     }
 
     #[rstest]
@@ -202,23 +217,25 @@ mod nuclear__test {
     #[case("1 2 3 8 9")]
     fn is_unidirectional(#[case] input: &str) {
         let lr = LevelReport::from_str(input).unwrap();
-        assert!(lr.is_unidirectional())
+        assert!(lr.is_unidirectional()<= LevelReport::THRESHOLD)
     }
 
     #[rstest]
     #[case("7 4 8 2 1")]
     #[case("1 2 3 8 3")]
-    #[case("43 44 47 49 49")]
+    #[case("43 44 47 49 49 1")]
     fn is_unidirectional__false(#[case] input: &str) {
         let lr = LevelReport::from_str(input).unwrap();
-        assert!(!lr.is_unidirectional())
+        assert!(!(lr.is_unidirectional()<= LevelReport::THRESHOLD));
     }
 
     #[test]
     fn isolate() {
-        let lr = LevelReport::from_str("95 93 91 90 90").unwrap();
-        assert!(!lr.is_rising());
-        assert!(!lr.is_lowering());
+        let lr = LevelReport::from_str("95 93 91 90 90 90").unwrap();
+        let rising = lr.is_rising();
+        println!("{rising}");
+        assert!(!rising <= LevelReport::THRESHOLD);
+        assert!(!lr.is_lowering()<= LevelReport::THRESHOLD);
     }
 
     #[test]
