@@ -77,11 +77,11 @@ impl LevelReport {
     }
 
     pub fn is_safe(&self) -> bool {
-        (self.is_gradual() +
-            self.is_unidirectional()) <= LevelReport::THRESHOLD
+        (self.gradual_trips() +
+            self.unidirectional_trips()) <= LevelReport::THRESHOLD
     }
 
-    pub fn is_gradual(&self) -> usize {
+    pub fn gradual_trips(&self) -> usize {
         let mut fails: usize = 0;
         for i in 0..self.vec().len() {
             let boundary = self.vec().len() - 1;
@@ -160,7 +160,21 @@ impl LevelReport {
         (lower, higher, flat)
     }
 
-    pub fn is_unidirectional(&self) -> usize {
+    pub fn directional_trips(&self) -> usize {
+        let (down, up, flat) = self.directions();
+
+        let mut trips = flat;
+
+        if down < up {
+            trips = trips + down;
+        } else {
+            trips = trips + up;
+        }
+
+        trips
+    }
+
+    pub fn unidirectional_trips(&self) -> usize {
         let rising = self.is_rising();
         let lowering = self.is_lowering();
 
@@ -201,6 +215,8 @@ mod nuclear__test {
     #[rstest]
     #[case("7 6 4 2 1")]
     #[case("1 2 3 4 5")]
+    #[case("1 2 3 4 5 5")]
+    #[case("1 2 3 4 5 4")]
     fn is_safe(#[case] input: &str) {
         let lr = LevelReport::from_str(input).unwrap();
         assert!(lr.is_safe())
@@ -211,6 +227,7 @@ mod nuclear__test {
     #[case("1 3 2 4 3")]
     #[case("7 4 8 2 1")]
     #[case("1 2 3 8 3")]
+    #[case("1 2 3 8 7")]
     #[case("43 44 47 49 49 49")]
     #[case("43 44 47 49 49 48")]
     fn is_safe__false(#[case] input: &str) {
@@ -219,21 +236,15 @@ mod nuclear__test {
     }
 
     #[rstest]
-    #[case("8 7 3 2 1")]
-    #[case("7 6 4 2 1")]
-    #[case("1 3 2 4 5")]
-    #[case("43 44 47 49 49")]
-    fn is_gradual(#[case] input: &str) {
+    #[case("8 7 3 2 1", 1)]
+    #[case("7 6 4 2 1", 0)]
+    #[case("1 3 2 4 5", 0)]
+    #[case("43 44 47 49 49", 0)]
+    #[case("9 5 1", 2)]
+    #[case("1 4 5 7 9 15 19", 2)]
+    fn gradual_trips(#[case] input: &str, #[case] trips: usize) {
         let lr = LevelReport::from_str(input).unwrap();
-        assert!(lr.is_gradual() <= LevelReport::THRESHOLD);
-    }
-
-    #[rstest]
-    #[case("9 5 1")]
-    #[case("1 4 5 7 9 15 19")]
-    fn is_gradual__false(#[case] input: &str) {
-        let lr = LevelReport::from_str(input).unwrap();
-        assert!(!(lr.is_gradual()<= LevelReport::THRESHOLD))
+        assert_eq!(lr.gradual_trips(), trips);
     }
 
     #[rstest]
@@ -251,11 +262,25 @@ mod nuclear__test {
     }
 
     #[rstest]
+    #[case("9 5 1", 0)]
+    #[case("1 4 5 7 9 15 19", 0)]
+    #[case("1 4 3 7 9 15 15", 2)]
+    #[case("1 4 3 7 9 15 15 15", 3)]
+    #[case("1 4 3 7 9 15 15 15 14", 4)]
+    fn directional_trips(#[case] input: &str, #[case] trips: usize) {
+        let lr = LevelReport::from_str(input).unwrap();
+
+        let my_trips= lr.directional_trips();
+
+        assert_eq!(trips, my_trips);
+    }
+
+    #[rstest]
     #[case("7 6 4 2 1")]
     #[case("1 2 3 8 9")]
     fn is_unidirectional(#[case] input: &str) {
         let lr = LevelReport::from_str(input).unwrap();
-        assert!(lr.is_unidirectional()<= LevelReport::THRESHOLD)
+        assert!(lr.unidirectional_trips()<= LevelReport::THRESHOLD)
     }
 
     #[rstest]
@@ -265,7 +290,7 @@ mod nuclear__test {
     #[ignore]
     fn is_unidirectional__false(#[case] input: &str) {
         let lr = LevelReport::from_str(input).unwrap();
-        assert!(!(lr.is_unidirectional()<= LevelReport::THRESHOLD));
+        assert!(!(lr.unidirectional_trips()<= LevelReport::THRESHOLD));
     }
 
     #[test]

@@ -45,4 +45,8 @@ fn main() {
 
     println!("UNSAFE: {}", notsafe.len());
     println!("safe: {}", safe.len());
+
+    for report in notsafe.vec() {
+        println!("{:?}", report);
+    }
 }
